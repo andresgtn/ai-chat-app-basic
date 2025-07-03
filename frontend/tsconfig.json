@@ -1,0 +1,32 @@
+// Filename: frontend/tsconfig.json
+{
+  "compilerOptions": {
+    "target": "es5", // Output ES5-compatible JS (wide browser support)
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ], // Include DOM & latest JS features
+    "allowJs": true, // Allow plain .js files in the project
+    "skipLibCheck": true, // Skip type checking of 3rd-party libraries
+    "strict": true, // Enable strict type-checking (recommended)
+    "forceConsistentCasingInFileNames": true, // Prevent casing mismatches on import paths
+    "noEmit": true, // Don't output compiled JS (Next.js handles it)
+    "esModuleInterop": true, // Allow default imports from CommonJS modules
+    "module": "esnext", // Use modern module system
+    "moduleResolution": "node", // Resolve modules like Node.js
+    "resolveJsonModule": true, // Allow importing .json files
+    "isolatedModules": true, // Required for Next.js (ensures every file is a module)
+    "jsx": "preserve" // Preserve JSX syntax for Next.js to compile
+    ,
+    "incremental": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx"
+  ], // Files to include
+  "exclude": [
+    "node_modules"
+  ] // Don't typecheck dependencies
+}

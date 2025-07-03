@@ -1,35 +1,60 @@
-from fastapi import FastAPI
+# main.py — using Groq API with LLaMA 3 70B model
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import openai
-import os
 from dotenv import load_dotenv
+import os
+import httpx
 
 # Load environment variables from .env
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# Allow CORS for frontend development (running on localhost:3000)
+# Allow frontend to communicate with backend (CORS policy)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_methods=["POST"],
-    allow_headers=["Content-Type"],
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Define the structure of the request body using Pydantic
+# Body schema for incoming requests
 class ChatRequest(BaseModel):
     message: str
 
-# Define a POST endpoint at /chat
+# Define constants
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+MODEL_NAME = "llama3-70b-8192"  # <- more stable for chat
+
 @app.post("/chat")
 async def chat(req: ChatRequest):
-    # Use OpenAI ChatCompletion API to generate a response
-    completion = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": req.message}]
-    )
-    # Return the assistant's response
-    return {"response": completion.choices[0].message["content"]}
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": MODEL_NAME,
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": req.message}
+        ],
+        "temperature": 0.7
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(GROQ_API_URL, headers=headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            answer = data["choices"][0]["message"]["content"]
+            return {"response": answer.strip()}
+
+    except Exception as e:
+        print("Error calling Groq API:", e)
+        return {"response": "[Backend error] Check logs for details."}
+
